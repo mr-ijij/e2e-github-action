@@ -1,0 +1,17 @@
+{
+  "name": "e2e-github-action",
+  "version": "1.0.0",
+  "description": "github actionでe2eのテストを実行する",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {},
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "cypress": "^13.6.0",
+    "mochawesome": "^7.1.3"
+  }
+}

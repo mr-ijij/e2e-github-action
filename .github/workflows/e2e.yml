@@ -1,0 +1,40 @@
+name: E2E
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install jq
+        run: sudo apt-get install jq
+      - name: Cypress run
+        uses: cypress-io/github-action@v3
+        with:
+          project: ./
+          browser: chrome
+          wait-on: "https://e2e-github-action.vercel.app/"
+          wait-on-timeout: 60
+        env:
+          # CYPRESS_*の形式で環境変数を設定する必要がある
+          CYPRESS_USER_NAME: ${{ secrets.USER_NAME }}
+          CYPRESS_PASSWORD: ${{ secrets.PASSWORD }}
+      - name: Prepare Slack Message
+        if: failure()
+        id: prepare_slack_message
+        run: |
+          JSON_RESULT=$(cat cypress/results/mochawesome.json)
+          FAILED_TESTS=$(echo "$JSON_RESULT" | jq '.results[].suites[].tests[]' | jq -c .)
+          echo "SLACK_MESSAGE=$FAILED_TESTS" >> $GITHUB_ENV
+      - name: Notify failure on Slack
+        if: failure()
+        uses: slackapi/slack-github-action@v1.23.0
+        with:
+          channel-id: ${{ secrets.SLACK_CHANNEL }}
+          slack-message: "${{ secrets.SLACK_MENTION }}\n\nCypress E2E Test Failure\n:x:\n\n```\n${{ env.SLACK_MESSAGE }}\n```\nhttps://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
